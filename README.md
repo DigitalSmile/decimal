@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/DigitalSmile/decimal.svg?branch=master)](https://travis-ci.com/DigitalSmile/decimal)
+
 # Decimal - non-allocating fixed-point arithmetic (forked)
 
 Original code is here -> https://github.com/maxtomin/decimal. This version is forked for enhancments and to publish in to central maven repo. Fixed-point arithmetics implies predictable absolute rounding error, which can be critical in financial calculations.
