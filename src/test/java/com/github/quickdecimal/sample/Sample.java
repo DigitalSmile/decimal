@@ -36,7 +36,7 @@ public class Sample {
     private final Money avgPrice = new Money();
 
     public Sample(int margin) {
-        this.margin = Decimal.create(margin).divRD(10000L).add(1);
+        this.margin = Decimal.of(margin).divRD(10000L).add(1);
     }
 
     private Money calculateAvgPrice(Quantity[] quantities, Money[] prices) {
