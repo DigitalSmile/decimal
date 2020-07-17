@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/DigitalSmile/decimal.svg?branch=master)](https://travis-ci.com/DigitalSmile/decimal)
+[![Build Status](https://travis-ci.org/quickdecimal/decimal.svg?branch=master)](https://travis-ci.org/quickdecimal/decimal)
 
 # Decimal - non-allocating fixed-point arithmetic (forked)
 
