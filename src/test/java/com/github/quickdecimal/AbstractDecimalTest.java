@@ -21,7 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package com.github.decimal;
+package com.github.quickdecimal;
 
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ import java.text.ParseException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static com.github.decimal.AbstractDecimal.NaN;
+import static com.github.quickdecimal.AbstractDecimal.NaN;
 
 public class AbstractDecimalTest {
     private final TestDecimal quantity = new TestDecimal(2);

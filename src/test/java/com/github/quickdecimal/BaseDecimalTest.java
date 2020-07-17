@@ -21,7 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package com.github.decimal;
+package com.github.quickdecimal;
 
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static com.github.decimal.AbstractDecimal.NaN;
+import static com.github.quickdecimal.AbstractDecimal.NaN;
 
 public class BaseDecimalTest {
     private final BaseDecimal decimal = new BaseDecimal() {

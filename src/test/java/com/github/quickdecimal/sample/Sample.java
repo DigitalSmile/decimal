@@ -21,9 +21,9 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package com.github.decimal.sample;
+package com.github.quickdecimal.sample;
 
-import com.github.decimal.Decimal;
+import com.github.quickdecimal.Decimal;
 
 import java.text.ParseException;
 

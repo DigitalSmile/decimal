@@ -22,10 +22,10 @@
  SOFTWARE.
  */
 
-package com.github.decimal;
+package com.github.quickdecimal;
 
-import com.github.decimal.sample.Money;
-import com.github.decimal.sample.Quantity;
+import com.github.quickdecimal.sample.Money;
+import com.github.quickdecimal.sample.Quantity;
 import org.openjdk.jmh.annotations.*;
 
 import java.math.BigDecimal;

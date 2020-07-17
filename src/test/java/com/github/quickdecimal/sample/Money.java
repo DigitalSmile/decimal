@@ -21,17 +21,23 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package com.github.decimal;
+package com.github.quickdecimal.sample;
 
-class TestDecimal extends AbstractDecimal<TestDecimal> {
-    private final int scale;
+import com.github.quickdecimal.AbstractDecimal;
 
-    public TestDecimal(int scale) {
-        this.scale = scale;
-    }
+import java.text.ParseException;
 
+public class Money extends AbstractDecimal<Money> {
     @Override
     protected int getScale() {
-        return scale;
+        return 8;
+    }
+
+    public static Money create(String s) throws ParseException {
+        return new Money().parse(s);
+    }
+
+    public static Money create(double value) {
+        return new Money().fromDoubleRD(value);
     }
 }
