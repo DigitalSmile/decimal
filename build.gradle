@@ -19,7 +19,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
 }
 
-group = 'com.github.decimal'
+group = 'com.github.quickdecimal'
 version = '1.0'
 sourceCompatibility = '11'
 
