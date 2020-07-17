@@ -1,4 +1,4 @@
-<!--
+/*
  MIT License
 
  Copyright (c) 2016 Maxim Tomin
@@ -20,18 +20,24 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
--->
-<project>
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>maximtomin</groupId>
-    <artifactId>decimal</artifactId>
-    <version>1.0</version>
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-</project>
+ */
+package com.github.decimal.sample;
+
+import com.github.decimal.AbstractDecimal;
+
+import java.text.ParseException;
+
+public class Money extends AbstractDecimal<Money> {
+    @Override
+    protected int getScale() {
+        return 8;
+    }
+
+    public static Money create(String s) throws ParseException {
+        return new Money().parse(s);
+    }
+
+    public static Money create(double value) {
+        return new Money().fromDoubleRD(value);
+    }
+}

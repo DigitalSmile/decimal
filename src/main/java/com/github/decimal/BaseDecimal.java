@@ -21,7 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package decimal;
+package com.github.decimal;
 
 import java.math.RoundingMode;
 
@@ -30,7 +30,7 @@ import java.math.RoundingMode;
  * If you have to understand it, the following information can help you.
  * <p>
  * The class is doing long multiplication and division for 96-bit and 128-bit (mostly) positive numbers.
- * It is required to do operations with numbers with up to 9 implied decimal points.
+ * It is required to do operations with numbers with up to 9 implied com.github.decimal points.
  * "9" is the highest power of 10 still fitting signed 32-bit int, which simplifies (and speeds up) calculations a lot.
  * <p>
  * Main 2 methods of the class are "mulscale_63_31" and "scalediv_63_63".

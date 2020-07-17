@@ -21,23 +21,23 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package decimal.sample;
+package com.github.decimal.sample;
 
-import decimal.AbstractDecimal;
+import com.github.decimal.AbstractDecimal;
 
 import java.text.ParseException;
 
-public class Price extends AbstractDecimal<Price> {
+public class Quantity extends AbstractDecimal<Quantity> {
     @Override
     protected int getScale() {
-        return 8;
+        return 2;
     }
 
-    public static Price create(String s) throws ParseException {
-        return new Price().parse(s);
+    public static Quantity create(String value) throws ParseException {
+        return new Quantity().parse(value);
     }
 
-    public static Price create(double value) {
-        return new Price().fromDoubleRD(value);
+    public static Quantity create(long value) throws ParseException {
+        return new Quantity().fromDoubleRD(value);
     }
 }

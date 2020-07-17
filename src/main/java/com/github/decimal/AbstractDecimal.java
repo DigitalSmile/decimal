@@ -21,13 +21,13 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package decimal;
+package com.github.decimal;
 
 import java.math.RoundingMode;
 import java.text.ParseException;
 
 /**
- * Fixed point decimal, represented as a long mantissa and integer implied decimal points (dp) from 0 to 9, which is constant
+ * Fixed point com.github.decimal, represented as a long mantissa and integer implied com.github.decimal points (dp) from 0 to 9, which is constant
  * for a concrete class (instance of same class must always have the same scale). Multiple subclases with different dps
  * can be created, e.g. Quantity with 2 dp and Price with 8 dp.
  * Supports basic arithmetic operations with full control of overflow and rounding.
@@ -55,7 +55,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
     public static final long NaN = Long.MIN_VALUE;
 
     /**
-     * Implied decimal points, must be constant for the class, must be between 0 and 9.
+     * Implied com.github.decimal points, must be constant for the class, must be between 0 and 9.
      */
     protected abstract int getScale();
 
@@ -68,7 +68,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
     }
 
     /**
-     * Raw long value without decimal points. Can be from {@link -Long#MAX_VALUE} to {@link Long#MAX_VALUE} with the
+     * Raw long value without com.github.decimal points. Can be from {@link -Long#MAX_VALUE} to {@link Long#MAX_VALUE} with the
      * {@link Long#MIN_VALUE} reserved for NaN
      */
     public long getRaw() {
@@ -76,7 +76,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
     }
 
     /**
-     * Raw long value without decimal points
+     * Raw long value without com.github.decimal points
      */
     public T setRaw(long raw) {
         a = raw;
@@ -109,14 +109,14 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
     }
 
     /**
-     * Copy the value from another decimal, rounding down if necessary
+     * Copy the value from another com.github.decimal, rounding down if necessary
      */
     public T setRD(AbstractDecimal<?> a) {
         return set(a, RoundingMode.DOWN);
     }
     
     /**
-     * Copy the value from another decimal
+     * Copy the value from another com.github.decimal
      * Rounding is required if the argument scale is greater than this scale.
      */
     public T set(AbstractDecimal<?> a, RoundingMode roundingMode) {
@@ -620,7 +620,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      * In particular, if scale == {@link #getScale} then {@link #setRaw}(value)
      *
      * @param value mantissa
-     * @param scale decimal exponent
+     * @param scale com.github.decimal exponent
      * @param roundingMode required if scale is greater than {@link #getScale}
      */
     public T fromLong(long value, int scale, RoundingMode roundingMode) {

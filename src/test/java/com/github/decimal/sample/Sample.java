@@ -21,9 +21,9 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package decimal.sample;
+package com.github.decimal.sample;
 
-import decimal.Decimal;
+import com.github.decimal.Decimal;
 
 import java.text.ParseException;
 
@@ -32,14 +32,14 @@ public class Sample {
     private final Quantity cumQuantity = new Quantity();
     private final Quantity contraQuantity = new Quantity();
     private final Quantity cumContraQuantity = new Quantity();
-    private final Price priceWithMargin = new Price();
-    private final Price avgPrice = new Price();
+    private final Money priceWithMargin = new Money();
+    private final Money avgPrice = new Money();
 
     public Sample(int margin) {
         this.margin = Decimal.create(margin).divRD(10000L).add(1);
     }
 
-    private Price calculateAvgPrice(Quantity[] quantities, Price[] prices) {
+    private Money calculateAvgPrice(Quantity[] quantities, Money[] prices) {
         cumQuantity.set(0);
         contraQuantity.set(0);
 
@@ -54,13 +54,13 @@ public class Sample {
     }
 
     public static void main(String[] args) throws ParseException {
-        Price p1 = Price.create("1.5");
-        Price p2 = Price.create(1.6);
+        Money p1 = Money.create("1.5");
+        Money p2 = Money.create(1.6);
 
         Quantity q1 = Quantity.create("100");
         Quantity q2 = Quantity.create(200);
 
         Sample sample = new Sample(5); // 5 bp margin
-        System.out.println(sample.calculateAvgPrice(new Quantity[]{q1, q2}, new Price[]{p1, p2}));
+        System.out.println(sample.calculateAvgPrice(new Quantity[]{q1, q2}, new Money[]{p1, p2}));
     }
 }

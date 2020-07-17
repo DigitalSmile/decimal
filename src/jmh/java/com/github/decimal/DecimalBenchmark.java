@@ -22,18 +22,15 @@
  SOFTWARE.
  */
 
-package maximtomin;
+package com.github.decimal;
 
-import decimal.sample.Price;
-import decimal.sample.Quantity;
+import com.github.decimal.sample.Money;
+import com.github.decimal.sample.Quantity;
 import org.openjdk.jmh.annotations.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.concurrent.TimeUnit;
 
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
 public class DecimalBenchmark {
     private long seed = System.nanoTime();
@@ -51,7 +48,7 @@ public class DecimalBenchmark {
 
     @Benchmark
     public long control() {
-        return new Quantity().setRaw(value1).getRaw() + new Price().setRaw(value2).getRaw();
+        return new Quantity().setRaw(value1).getRaw() + new Money().setRaw(value2).getRaw();
     }
 
     @Benchmark
@@ -66,12 +63,12 @@ public class DecimalBenchmark {
 
     @Benchmark
     public long multiplyDecimal() {
-        return new Quantity().setRaw(value1).mulRD(new Price().setRaw(value2)).getRaw();
+        return new Quantity().setRaw(value1).mulRD(new Money().setRaw(value2)).getRaw();
     }
 
     @Benchmark
     public long quotientDecimal() {
-        return new Price().quotientRD(new Quantity().setRaw(value1), new Quantity().setRaw(value2)).getRaw();
+        return new Money().quotientRD(new Quantity().setRaw(value1), new Quantity().setRaw(value2)).getRaw();
     }
 
     @Benchmark

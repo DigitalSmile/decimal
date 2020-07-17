@@ -21,7 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-package decimal;
+package com.github.decimal;
 
 class TestDecimal extends AbstractDecimal<TestDecimal> {
     private final int scale;

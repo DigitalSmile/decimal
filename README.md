@@ -1,6 +1,6 @@
-# Decimal - non-allocating fixed-point arithmetic
+# Decimal - non-allocating fixed-point arithmetic (forked)
 
-Fixed-point arithmetics implies predictable absolute rounding error, which can be critical in financial calculations.
+Original code is here -> https://github.com/maxtomin/decimal. This version is forked for enhancments and to publish in to central maven repo. Fixed-point arithmetics implies predictable absolute rounding error, which can be critical in financial calculations.
 Unlike floating-point numbers, precision of a value depends solely on its type and does not depend on how big or small it is.
 
 ## Functional and reliable
