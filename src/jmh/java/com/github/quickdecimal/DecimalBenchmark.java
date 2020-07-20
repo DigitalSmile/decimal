@@ -24,8 +24,6 @@
 
 package com.github.quickdecimal;
 
-import com.github.quickdecimal.sample.Money;
-import com.github.quickdecimal.sample.Quantity;
 import org.openjdk.jmh.annotations.*;
 
 import java.math.BigDecimal;
@@ -48,7 +46,7 @@ public class DecimalBenchmark {
 
     @Benchmark
     public long control() {
-        return new Quantity().setRaw(value1).getRaw() + new Money().setRaw(value2).getRaw();
+        return DecimalFactory.of(value1).longValue() + DecimalFactory.of(value2).longValue();
     }
 
     @Benchmark
@@ -63,12 +61,12 @@ public class DecimalBenchmark {
 
     @Benchmark
     public long multiplyDecimal() {
-        return new Quantity().setRaw(value1).mulRD(new Money().setRaw(value2)).getRaw();
+        return DecimalFactory.of(value1).multiply(DecimalFactory.of(value2)).longValue();
     }
 
     @Benchmark
     public long quotientDecimal() {
-        return new Money().quotientRD(new Quantity().setRaw(value1), new Quantity().setRaw(value2)).getRaw();
+        return DecimalFactory.of(value1).divide(DecimalFactory.of(value2)).longValue();
     }
 
     @Benchmark

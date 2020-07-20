@@ -44,7 +44,7 @@ import java.math.RoundingMode;
  * so usually odd number of bits means higher part and even number of bits means lower part, e.g. p_63 and p_32 represents
  * a single 96-bit positive integer with high 2 words in p_63 and low word in p_32. "Word" means 32-bit unsigned integer.
  * Suffix in a method name denotes the type of the result. Some methods returns values bigger than "long", e.g.
- * "mulhi_63_32", returns 96-bit result, hi 63-bit in "return" and lo 32-bit in {@link #a}.
+ * "mulhi_63_32", returns 96-bit result, hi 63-bit in "return" and lo 32-bit in {@link #accumulator}.
  * <p>
  * Most of the variables has "long" type, even if they store only 31 or 32 bits (to int overflows).
  * <p>
@@ -133,7 +133,22 @@ abstract class BaseDecimal extends Number {
     static final long WORD_CARRY = 1L << WORD_BITS;
     static final long WORD_LO_MASK = WORD_CARRY - 1;
 
-    long a; // accumulator
+    private long accumulator; // accumulator
+
+    /**
+     * Raw long value without com.github.decimal points. Can be from {@link -Long#MAX_VALUE} to {@link Long#MAX_VALUE} with the
+     * {@link Long#MIN_VALUE} reserved for NaN
+     */
+    protected long getRaw() {
+        return accumulator;
+    }
+
+    /**
+     * Raw long value without com.github.decimal points
+     */
+    protected void setRaw(long raw) {
+        this.accumulator = raw;
+    }
 
      /**
      * Multiply 63-bit and 32-bit unsigned numbers, resulting in 63+32 bit integer.
@@ -144,7 +159,7 @@ abstract class BaseDecimal extends Number {
         long rLo_64 = lo_32(a_63) * b_32;
         long rHi_63 = hi_31 * b_32 + hi_32(rLo_64);
 
-        a = lo_32(rLo_64);
+        accumulator = lo_32(rLo_64);
         return rHi_63;
     }
 
@@ -171,7 +186,7 @@ abstract class BaseDecimal extends Number {
 
         sign1 ^= sign2;
 
-        return round(negIf(result, sign1), negIf(a, sign1), d, roundingMode);
+        return round(negIf(result, sign1), negIf(accumulator, sign1), d, roundingMode);
     }
 
     /**
@@ -199,7 +214,7 @@ abstract class BaseDecimal extends Number {
         assert v_63 < d_63 : "and therefore quotient < m_31 <= Integer.MAX_VALUE";
 
         long p_63 = mulhi_63_32(v_63, POW10[scale]);
-        long p_32 = a;
+        long p_32 = accumulator;
 
         if (d_63 <= Integer.MAX_VALUE) {
             assert v_63 <= Integer.MAX_VALUE;
@@ -210,7 +225,7 @@ abstract class BaseDecimal extends Number {
             if (offset_63 < 0) {
                 return AbstractDecimal.NaN; // overflow
             }
-            a = v_63 % d_63; // remainder
+            accumulator = v_63 % d_63; // remainder
             return offset_63;
         }
 
@@ -273,7 +288,7 @@ abstract class BaseDecimal extends Number {
 
         // multiply back
         long phat_63 = mulhi_63_32(d_63, qhat_32);
-        long phat_32 = a;
+        long phat_32 = accumulator;
 
         // phat must be <= p, if not, applying correction down (no more than 1)
         if (greaterThan(phat_63, phat_32, p_63, p_32)) {
@@ -293,7 +308,7 @@ abstract class BaseDecimal extends Number {
         assert remainder >= 0 && remainder < d_63 : "no up corrections necessary";
 
         // original quantity and remainder
-        a = remainder >> shift;
+        accumulator = remainder >> shift;
         offset_63 += qhat_32;
 
         assert d_63 > POW10[scale] : "Because d_63 > Integer.MAX_VALUE";
@@ -325,7 +340,7 @@ abstract class BaseDecimal extends Number {
 
         sign1 ^= sign2;
 
-        return round(negIf(result, sign1), negIf(this.a, sign1), LONG_POW10[scale], roundingMode);
+        return round(negIf(result, sign1), negIf(this.accumulator, sign1), LONG_POW10[scale], roundingMode);
     }
 
     /**
@@ -397,14 +412,14 @@ abstract class BaseDecimal extends Number {
 
         // long division: words 2,1,0 by int POW10[scale]
         long result_63o = downScale_63_31(p_63, scale);
-        long ql_32 = downScale_63_31((a << WORD_BITS) | p_32, scale);
+        long ql_32 = downScale_63_31((accumulator << WORD_BITS) | p_32, scale);
 
         if (result_63o < 0 || result_63o > Integer.MAX_VALUE) {
             return AbstractDecimal.NaN; // overflow
         }
 
         if (r_33 != -1) {
-            a = a * 10000000000L + r_33; // need to consider remainder of first division by 10^10
+            accumulator = accumulator * 10000000000L + r_33; // need to consider remainder of first division by 10^10
         }
         return (result_63o << WORD_BITS) | ql_32;
     }
@@ -416,34 +431,34 @@ abstract class BaseDecimal extends Number {
     long downScale_63_31(long v_63, int scale) {
         switch (scale) {
             case 0:
-                a = 0;
+                accumulator = 0;
                 return v_63;
             case 1:
-                a = v_63 % 10;
+                accumulator = v_63 % 10;
                 return v_63 / 10;
             case 2:
-                a = v_63 % 100;
+                accumulator = v_63 % 100;
                 return v_63 / 100;
             case 3:
-                a = v_63 % 1000;
+                accumulator = v_63 % 1000;
                 return v_63 / 1000;
             case 4:
-                a = v_63 % 10000;
+                accumulator = v_63 % 10000;
                 return v_63 / 10000;
             case 5:
-                a = v_63 % 100000;
+                accumulator = v_63 % 100000;
                 return v_63 / 100000;
             case 6:
-                a = v_63 % 1000000;
+                accumulator = v_63 % 1000000;
                 return v_63 / 1000000;
             case 7:
-                a = v_63 % 10000000;
+                accumulator = v_63 % 10000000;
                 return v_63 / 10000000;
             case 8:
-                a = v_63 % 100000000;
+                accumulator = v_63 % 100000000;
                 return v_63 / 100000000;
             case 9:
-                a = v_63 % 1000000000;
+                accumulator = v_63 % 1000000000;
                 return v_63 / 1000000000;
             default:
                 throw new IllegalArgumentException("Incorrect scale: " + scale);
@@ -455,40 +470,40 @@ abstract class BaseDecimal extends Number {
      */
     long unsignedDownScale_64_31(long v_64, int scale) {
         // supports unsigned values
-        a = v_64 & 0x1;
+        accumulator = v_64 & 0x1;
         v_64 >>>= 1;
         switch (scale) {
             case 0:
                 v_64 <<= 1; // revert what we just did
-                v_64 += a;
-                a = 0;
+                v_64 += accumulator;
+                accumulator = 0;
                 return v_64;
             case 1:
-                a |= (v_64 % 5);
+                accumulator |= (v_64 % 5);
                 return v_64 / 5;
             case 2:
-                a |= (v_64 % 50) << 1;
+                accumulator |= (v_64 % 50) << 1;
                 return v_64 / 50;
             case 3:
-                a |= (v_64 % 500) << 1;
+                accumulator |= (v_64 % 500) << 1;
                 return v_64 / 500;
             case 4:
-                a |= (v_64 % 5000) << 1;
+                accumulator |= (v_64 % 5000) << 1;
                 return v_64 / 5000;
             case 5:
-                a |= (v_64 % 50000) << 1;
+                accumulator |= (v_64 % 50000) << 1;
                 return v_64 / 50000;
             case 6:
-                a |= (v_64 % 500000) << 1;
+                accumulator |= (v_64 % 500000) << 1;
                 return v_64 / 500000;
             case 7:
-                a |= (v_64 % 5000000) << 1;
+                accumulator |= (v_64 % 5000000) << 1;
                 return v_64 / 5000000;
             case 8:
-                a |= (v_64 % 50000000) << 1;
+                accumulator |= (v_64 % 50000000) << 1;
                 return v_64 / 50000000;
             case 9:
-                a |= (v_64 % 500000000) << 1;
+                accumulator |= (v_64 % 500000000) << 1;
                 return v_64 / 500000000;
             default:
                 throw new IllegalArgumentException("Incorrect scale: " + scale);
@@ -572,12 +587,12 @@ abstract class BaseDecimal extends Number {
 
         BaseDecimal that = (BaseDecimal) o;
 
-        return a == that.a;
+        return accumulator == that.accumulator;
     }
 
     @Override
     public int hashCode() {
-        return (int) (a ^ (a >>> 32));
+        return (int) (accumulator ^ (accumulator >>> 32));
     }
 }
 

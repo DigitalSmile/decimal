@@ -58,30 +58,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      * Implied com.github.decimal points, must be constant for the class, must be between 0 and 9.
      */
     protected abstract int getScale();
-
-    /**
-     * @return type-casted this object
-     */
-    @SuppressWarnings("unchecked")
-    public T self() {
-        return (T) this;
-    }
-
-    /**
-     * Raw long value without com.github.decimal points. Can be from {@link -Long#MAX_VALUE} to {@link Long#MAX_VALUE} with the
-     * {@link Long#MIN_VALUE} reserved for NaN
-     */
-    public long getRaw() {
-        return a;
-    }
-
-    /**
-     * Raw long value without com.github.decimal points
-     */
-    public T setRaw(long raw) {
-        a = raw;
-        return self();
-    }
+    protected abstract RoundingMode getDefaultRoundingMode();
 
     /**
      * true if the value is NaN.
@@ -94,401 +71,47 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
     /**
      * Throws an exception (allocating) if the value is NaN
      */
-    public T checkNotNaN() {
+    public boolean checkNotNaN() {
         if (isNaN()) {
             throw new ArithmeticException("Last operation was invalid (overflow or division by zero)");
         }
-        return self();
+        return true;
     }
 
     /**
      * Change the sign of the number.
      */
-    public T negate() {
-        return !isNaN() ? setRaw(-getRaw()) : self();
-    }
-
-    /**
-     * Copy the value from another com.github.decimal, rounding down if necessary
-     */
-    public T setRD(AbstractDecimal<?> a) {
-        return set(a, RoundingMode.DOWN);
-    }
-    
-    /**
-     * Copy the value from another com.github.decimal
-     * Rounding is required if the argument scale is greater than this scale.
-     */
-    public T set(AbstractDecimal<?> a, RoundingMode roundingMode) {
-        int scale = getScale() - a.getScale();
-        if (scale == 0) {
-            return setRaw(a.getRaw());
-        } else if (scale < 0 && !a.isNaN()) {
-            long result = downScale_63_31(a.getRaw(), -scale);
-            long remainder = getRaw();
-            return setRaw(round(result, remainder, POW10[-scale], roundingMode));
-        } else {
-            return setRaw(scaleWithOverflow(a.getRaw(), scale));
+    public void doNegate() {
+        if (!isNaN()) {
+            setRaw(-getRaw());
         }
     }
 
-    /**
-     * Copy the value from long (considering scale)
-     * No rounding required.
-     */
-    public T set(long a) {
-        return setRaw(scaleWithOverflow(a, getScale()));
-    }
+//    /**
+//     * Copy the value from another com.github.decimal
+//     * Rounding is required if the argument scale is greater than this scale.
+//     */
+//    public void set(AbstractDecimal<?> number, RoundingMode roundingMode) {
+//
+//    }
 
-    /**
-     * Copy the value from another Decimal with the same scale.
-     * No rounding required.
-     */
-    public T set(T a) {
-        return set(a, RoundingMode.UNNECESSARY);
-    }
+//    /**
+//     * Copy the value from long (considering scale)
+//     * No rounding required.
+//     */
+//    public void set(long number) {
+//
+//    }
 
-    /**
-     * Add 2 numbers of the same scale and puts result to this
-     * Round DOWN if the arguments' scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T plusRD(V a, V b) {
-        return plus(a, b, RoundingMode.DOWN);
-    }
+//    /**
+//     * Copy the value from another Decimal with the same scale.
+//     * No rounding required.
+//     */
+//    public void set(AbstractDecimal<?> number) {
+//        set(number, RoundingMode.UNNECESSARY);
+//    }
 
-    /**
-     * Add 2 numbers of the scale same to this
-     * No rounding required.
-     */
-    public T plus(T a, T b) {
-        if (getScale() != a.getScale() || getScale() != b.getScale()) {
-            throw new IllegalArgumentException("Scales must be the same");
-        }
 
-        return setRaw(plusWithOverflow(a.getRaw(), b.getRaw()));
-    }
-
-    /**
-     * Add 2 numbers of the same scale and puts result to this
-     * Rounding is required if the arguments' scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T plus(V a, V b, RoundingMode roundingMode) {
-        if (a.getScale() != b.getScale()) {
-            throw new IllegalArgumentException("Scales must be the same");
-        }
-
-        int scale = getScale() - a.getScale();
-        return plus(a.getRaw(), b.getRaw(), roundingMode, scale);
-    }
-
-    /**
-     * Add 2 longs and puts result to this
-     * No rounding required
-     */
-    public T plus(long a, long b) {
-        return setRaw(plusAndScale(a, b, getScale()));
-    }
-
-    /**
-     * Adds 2 longs and multiply the result by (possibly negative) power of 10
-     */
-    private T plus(long a, long b, RoundingMode roundingMode, int scale) {
-        if (scale >= 0 || a == NaN || b == NaN) {
-            return setRaw(plusAndScale(a, b, scale));
-        }
-
-        if (a >= 0 && b >= 0) { // unsigned overflow is not possible, ok with signed one
-            a = unsignedDownScale_64_31(a + b, -scale);
-            b = getRaw();
-        } else if (a < 0 && b < 0) { // same as above, but negate everything before and after
-            a = -unsignedDownScale_64_31(-a - b, -scale);
-            b = -getRaw();
-        } else { // no overflow is possible
-            a = downScale_63_31(a + b, -scale);
-            b = getRaw();
-        }
-        return setRaw(round(a, b, POW10[-scale], roundingMode));
-    }
-
-    /**
-     * Add a number to this.
-     * Round DOWN if the argument scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T addRD(V a) {
-        return add(a, RoundingMode.DOWN);
-    }
-
-    /**
-     * Add a number to this.
-     * Rounding is required if the argument scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T add(V a, RoundingMode roundingMode) {
-        int scale = getScale() - a.getScale();
-        return add(a.getRaw(), roundingMode, scale);
-    }
-
-    /**
-     * Add a number of the same scale to this.
-     * No rounding required.
-     */
-    @SuppressWarnings("unchecked")
-    public T add(T a) {
-        return plus((T) this, a);
-    }
-
-    /**
-     * Add a long number to this.
-     * No rounding required.
-     */
-    public T add(long a) {
-        return setRaw(scaleAndPlus(a, getScale(), getRaw()));
-    }
-
-    /**
-     * Adds a value multiplied by (possibly negative)  power of 10
-     */
-    private T add(long a, RoundingMode roundingMode, int scale) {
-        if (scale < 0 && !isNaN() && a != NaN) {
-            long self = getRaw();
-            long other = downScale_63_31(a, -scale);
-            long remainder = getRaw();
-
-            // have to inline plusWithOverflow here to avoid extra "if NaN then return immediately"
-            long result = self + other;
-            if (self == NaN || other == NaN || (result < 0) != (self < 0) && (result < 0) != (other < 0)) {
-                return setRaw(NaN);
-            }
-
-            int denominator = POW10[-scale];
-            if (result < 0 && remainder > 0) {
-                remainder -= denominator;
-                ++result;
-            } else if (result > 0 && remainder < 0) {
-                remainder += denominator;
-                --result;
-            }
-
-            return setRaw(round(result, remainder, denominator, roundingMode));
-        }
-
-        return setRaw(scaleAndPlus(a, scale, getRaw()));
-    }
-
-    /**
-     * Subtract 2 numbers of the same scale and puts result to this
-     * Round DOWN if the arguments' scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T minusRD(V a, V b) {
-        return minus(a, b, RoundingMode.DOWN);
-    }
-
-    /**
-     * Subtract 2 numbers of the scale same to this
-     * No rounding required.
-     */
-    public T minus(T a, T b) {
-        if (getScale() != a.getScale() || getScale() != b.getScale()) {
-            throw new IllegalArgumentException("Scales must be the same");
-        }
-
-        return setRaw(plusWithOverflow(a.getRaw(), -b.getRaw()));
-    }
-
-    /**
-     * Subtract 2 numbers of the same scale and puts result to this
-     * Rounding is required if the arguments' scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T minus(V a, V b, RoundingMode roundingMode) {
-        if (a.getScale() != b.getScale()) {
-            throw new IllegalArgumentException("Scales must be the same");
-        }
-
-        int scale = getScale() - a.getScale();
-        return plus(a.getRaw(), -b.getRaw(), roundingMode, scale);
-    }
-
-    /**
-     * Subtract 2 longs and puts result to this
-     * No rounding required
-     */
-    public T minus(long a, long b) {
-        return plus(a, -b);
-    }
-
-    /**
-     * Subtract a number from this.
-     * Round DOWN if the argument scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T subtractRD(V a) {
-        return subtract(a, RoundingMode.DOWN);
-    }
-
-    /**
-     * Subtract a number from this.
-     * Rounding is required if the argument scale is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T subtract(V a, RoundingMode roundingMode) {
-        int scale = getScale() - a.getScale();
-        return add(-a.getRaw(), roundingMode, scale);
-    }
-
-    /**
-     * Subtract a number of the same scale from this.
-     * No rounding required.
-     */
-    @SuppressWarnings("unchecked")
-    public T subtract(T a) {
-        return minus((T) this, a);
-    }
-
-    /**
-     * Subtract a long from this.
-     * No rounding required.
-     */
-    public T subtract(long a) {
-        return add(-a);
-    }
-
-    /**
-     * Multiply 2 numbers of the same scale and put the result to this.
-     * Round DOWN if the arguments scale combined is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T productRD(V a, V b) {
-        return product(a, b, RoundingMode.DOWN);
-    }
-
-    /**
-     * Multiply 2 numbers of the same scale and put the result to this.
-     * Rounding is required if the arguments scale combined is greater than this scale.
-     */
-    public <V extends AbstractDecimal> T product(V a, V b, RoundingMode roundingMode) {
-        if (a.getScale() != b.getScale()) {
-            throw new IllegalArgumentException("Scales must be the same");
-        }
-
-        int scale = a.getScale() + b.getScale() - getScale();
-        if (scale >= 0) {
-            return setRaw(mulScaleRound(a.getRaw(), b.getRaw(), scale, roundingMode));
-        } else {
-            return setRaw(scaleWithOverflow(mulWithOverflow(a.getRaw(), b.getRaw()), -scale));
-        }
-    }
-
-    /**
-     * Multiply 2 longs put the result to this.
-     * Rounding is not required.
-     */
-    public T product(long a, long b) {
-        return setRaw(scaleWithOverflow(mulWithOverflow(a, b), getScale()));
-    }
-
-    /**
-     * Multiply this by the argument.
-     * Round DOWN if argument scale is not zero.
-     */
-    public <V extends AbstractDecimal> T mulRD(V a) {
-        return mul(a, RoundingMode.DOWN);
-    }
-
-    /**
-     * Multiply this by the argument.
-     * Rounding is required if argument scale is not zero.
-     */
-    public <V extends AbstractDecimal> T mul(V a, RoundingMode roundingMode) {
-        return setRaw(mulScaleRound(getRaw(), a.getRaw(), a.getScale(), roundingMode));
-    }
-
-    /**
-     * Multiply this by the argument.
-     * Rounding is not required.
-     */
-    public T mul(long a) {
-        return setRaw(mulWithOverflow(getRaw(), a));
-    }
-
-    /**
-     * Divide first argument bye second and the result to this.
-     * Round DOWN.
-     * Return {@link #NaN} if b is zero.
-     */
-    public <V extends AbstractDecimal> T quotientRD(V a, V b) {
-        return quotient(a, b, RoundingMode.DOWN);
-    }
-
-    /**
-     * Divide first argument bye second and the result to this.
-     * Rounding is always required.
-     * Return {@link #NaN} if b is zero.
-     */
-    public <V extends AbstractDecimal> T quotient(V a, V b, RoundingMode roundingMode) {
-        if (a.getScale() != b.getScale()) {
-            throw new IllegalArgumentException("Scales must be the same");
-        }
-        return quotient(a.getRaw(), b.getRaw(), roundingMode);
-    }
-
-    /**
-     * Divide first argument bye second and the result to this.
-     * Round DOWN.
-     * Return {@link #NaN} if b is zero.
-     */
-    public T quotientRD(long a, long b) {
-        return quotient(a, b, RoundingMode.DOWN);
-    }
-
-    /**
-     * Divide first argument bye second and the result to this.
-     * Rounding is always required.
-     * Return {@link #NaN} if b is zero.
-     */
-    public T quotient(long a, long b, RoundingMode roundingMode) {
-        return setRaw(scaleDivRound(a, getScale(), b, roundingMode));
-    }
-
-    /**
-     * Divide this by the argument and put result into this.
-     * Round DOWN.
-     * Return {@link #NaN} if a is zero.
-     */
-    public <V extends AbstractDecimal> T divRD(V a) {
-        return div(a, RoundingMode.DOWN);
-    }
-
-    /**
-     * Divide this by the argument and put result into this.
-     * Rounding is always required.
-     * Return {@link #NaN} if a is zero.
-     */
-    public <V extends AbstractDecimal> T div(V a, RoundingMode roundingMode) {
-        return setRaw(scaleDivRound(getRaw(), a.getScale(), a.getRaw(), roundingMode));
-    }
-
-    /**
-     * Divide this by the argument and put result into this.
-     * Round DOWN.
-     * Return {@link #NaN} if a is zero.
-     */
-    public T divRD(long a) {
-        return div(a, RoundingMode.DOWN);
-    }
-
-    /**
-     * Divide this by the argument and put result into this.
-     * Rounding is always required.
-     * Return {@link #NaN} if a is zero.
-     */
-    public T div(long a, RoundingMode roundingMode) {
-        if (isNaN() || a == NaN || a == 0) {
-            return setRaw(NaN);
-        }
-
-        // if a is negative - negate both numerator and denominator (to comply with "round" contract)
-        long signA = a >> 63;
-        a = negIf(a, signA);
-        long raw = negIf(getRaw(), signA);
-
-        return setRaw(round(raw / a, raw % a, a, roundingMode));
-    }
 
     /**
      * Created a copy of the class with the same raw number.
@@ -521,11 +144,11 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
         int scale = getScale() - o.getScale();
         if (scale >= 0) {
             long first = getRaw();
-            long second = scaleWithOverflow(o.getRaw(), scale);
+            long second = doScale(o.getRaw(), scale);
             return first < second || second == NaN && o.getRaw() > 0 ? -1 :
                     first > second ? 1 : 0;
         } else {
-            long first = scaleWithOverflow(getRaw(), -scale);
+            long first = doScale(getRaw(), -scale);
             long second = o.getRaw();
             return first > second || first == NaN && getRaw() > 0 ? 1 :
                     first < second ? -1 : 0;
@@ -537,7 +160,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      */
     @Override
     public byte byteValue() {
-        return (byte) toLong(RoundingMode.DOWN);
+        return (byte) toLong(getDefaultRoundingMode());
     }
 
     /**
@@ -545,7 +168,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      */
     @Override
     public short shortValue() {
-        return (short) toLong(RoundingMode.DOWN);
+        return (short) toLong(getDefaultRoundingMode());
     }
 
     /**
@@ -553,7 +176,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      */
     @Override
     public int intValue() {
-        return (int) toLong(RoundingMode.DOWN);
+        return (int) toLong(getDefaultRoundingMode());
     }
 
     /**
@@ -561,7 +184,7 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      */
     @Override
     public long longValue() {
-        return toLong(RoundingMode.DOWN);
+        return toLong(getDefaultRoundingMode());
     }
 
     /**
@@ -581,20 +204,12 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
     }
 
     /**
-     * Returns the whole part of the value rounding DOWN, throws exception if {@link #NaN}
-     */
-    public long toLongRD() {
-        return toLong(RoundingMode.DOWN);
-    }
-
-    /**
      * Returns the whole part of the value, throws exception if {@link #NaN}
      */
     public long toLong(RoundingMode roundingMode) {
         if (isNaN()) {
             throw new ArithmeticException("NaN");
         }
-
 
         long raw = getRaw(); // will be overridden by remainder
 
@@ -610,7 +225,12 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      * Converts long to Decimal value. Can result in {@link #NaN} (if overflow)
      */
     public T fromLong(long value) {
-        return setRaw(scaleWithOverflow(value, getScale()));
+        setRaw(doScale(value, getScale()));
+        return (T) this;
+    }
+
+    public T fromLong(long value, int scale) {
+        return fromLong(value, scale, getDefaultRoundingMode());
     }
 
     /**
@@ -625,16 +245,19 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      */
     public T fromLong(long value, int scale, RoundingMode roundingMode) {
         if (scale < -18) {
-            return setRaw(value == 0 ? 0 : NaN);
+            setRaw(value == 0 ? 0 : NaN);
+            return (T) this;
         }
         if (getScale() - scale < -18) {
             // rounded zero
-            return setRaw(round(0, Long.signum(value), Long.MAX_VALUE, roundingMode));
+            setRaw(round(0, Long.signum(value), Long.MAX_VALUE, roundingMode));
+            return (T) this;
         }
 
         scale = getScale() - scale; // no overflow guaranteed
         if (scale >= 0) {
-            return setRaw(scale > 18 ? NaN : scaleWithOverflow(value, scale));
+            setRaw(scale > 18 ? NaN : doScale(value, scale));
+            return (T) this;
         } else {
             scale = -scale;
             assert scale <= 18;
@@ -645,18 +268,15 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
                 // the formula for final remainder derived from:
                 // v / d1 / d2 = (q1 + r1 / d1) / d2 = q1 / d2 + r1 / d1d2 = q2 + r2 / d2 + r1 / d1d2 = q2 + (r2d1 + r1) / d1d2
                 value = downScale_63_31(value, 9);
-                remainder = a * 1000000000;
+                remainder = getRaw() * 1000000000;
                 scale -= 9;
             }
             value = downScale_63_31(value, scale);
-            remainder += a;
+            remainder += getRaw();
 
-            return setRaw(round(value, remainder, divisor, roundingMode));
+            setRaw(round(value, remainder, divisor, roundingMode));
+            return (T) this;
         }
-    }
-
-    public T fromLongRD(long value, int scale) {
-        return fromLong(value, scale, RoundingMode.DOWN);
     }
 
     /**
@@ -666,11 +286,8 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
         return !isNaN() ? (double) getRaw() / POW10[getScale()] : Double.NaN;
     }
 
-    /**
-     * Converts doublie to Decimal value rounding DOWN
-     */
-    public T fromDoubleRD(double value) {
-        return fromDouble(value, RoundingMode.DOWN);
+    public T fromDouble(double value) {
+        return fromDouble(value, getDefaultRoundingMode());
     }
 
     /**
@@ -694,13 +311,16 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
                 return setIntDouble(Math.ceil(value));
             case HALF_EVEN:
                 return setIntDouble(Math.rint(value));
+            case UNNECESSARY:
+                return setIntDouble(value);
             default:
                 throw new IllegalArgumentException("Unsupported rounding mode for double: " + roundingMode);
         }
     }
 
     private T setIntDouble(double value) {
-        return setRaw(value >= -Long.MAX_VALUE && value <= Long.MAX_VALUE ? (long) value : NaN);
+        setRaw(value >= -Long.MAX_VALUE && value <= Long.MAX_VALUE ? (long) value : NaN);
+        return (T) this;
     }
 
     /**
@@ -773,7 +393,8 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
                         charSequence.charAt(offset + 2) != 'n' && charSequence.charAt(offset + 2) != 'N') {
                     throw new ParseException("Unexpected alphanumeric value", 0);
                 }
-                return setRaw(NaN);
+                setRaw(NaN);
+                return (T) this;
             default:
                 // go on
         }
@@ -807,11 +428,12 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
             }
         }
 
-        result = scaleWithOverflow(result, getScale() - (length - fractionalStart));
+        result = doScale(result, getScale() - (length - fractionalStart));
         if (result == NaN) {
             throw new ParseException("Overflow while scaling up", 0);
         }
-        return setRaw(negative ? -result : result);
+        setRaw(negative ? -result : result);
+        return (T) this;
     }
 
     private static final int MAX_LONG_SIZE = Long.toString(Long.MAX_VALUE).length();
@@ -828,8 +450,8 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
     /**
      * Adds 2 longs and multiply the result by non-negative power of 10
      */
-    private static long plusAndScale(long a, long b, int nonNegScale) {
-        return scaleWithOverflow(plusWithOverflow(a, b), nonNegScale);
+    protected long plusAndScale(long a, long b, int nonNegScale) {
+        return doScale(doPlus(a, b), nonNegScale);
     }
 
     /**
@@ -837,9 +459,9 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
      * a * 10^scale + b
      * Tries to eliminate multiplication overflow in case of different sign addends
      */
-    private static long scaleAndPlus(long a, int nonNegScale, long b) {
+    protected long scaleAndPlus(long a, long b, int nonNegScale) {
         if (nonNegScale > 0) {
-            long scaled = scaleWithOverflow(a, nonNegScale);
+            long scaled = doScale(a, nonNegScale);
             if (scaled == NaN && a != NaN && b != NaN) {
                 // trying to eliminate overflow (possible when a and raw has different signs and abs(raw) is big enough)
 
@@ -866,26 +488,50 @@ public abstract class AbstractDecimal<T extends AbstractDecimal> extends BaseDec
             a = scaled;
         }
 
-        return plusWithOverflow(b, a);
+        return doPlus(b, a);
     }
 
-    private static long plusWithOverflow(long a, long b) {
+    protected long doPlus(AbstractDecimal<?> firstNumber, AbstractDecimal<?> secondNumber) {
+        return doPlus(firstNumber.getRaw(), secondNumber.getRaw());
+    }
+
+    private long doPlus(long a, long b) {
         long result = a + b;
         return a == NaN || b == NaN || (result < 0) != (a < 0) && (result < 0) != (b < 0) ? NaN : result;
     }
 
-    private static long scaleWithOverflow(long value, int scale) {
+    protected long doScale(AbstractDecimal<?> firstNumber, int scale) {
+        return doScale(firstNumber.getRaw(), scale);
+    }
+
+    protected long doScale(long value, int scale) {
          return value >= -SCALE_OVERFLOW_LIMITS[scale] && value <= SCALE_OVERFLOW_LIMITS[scale] ?
                  value * LONG_POW10[scale] : NaN;
     }
 
-    private long mulWithOverflow(long a, long b) {
+    protected long doMultiply(AbstractDecimal<?> firstNumber, AbstractDecimal<?> secondNumber) {
+        return doMultiply(firstNumber.getRaw(), secondNumber.getRaw());
+    }
+
+    protected long doMultiply(long a, long b) {
         if (a > Integer.MIN_VALUE && a <= Integer.MAX_VALUE &&
                 b > Integer.MIN_VALUE && b <= Integer.MAX_VALUE) { // and not NaN
             // can multiply without overflow
             return a * b;
         } else {
-            return mulScaleRound(a, b, 0, RoundingMode.DOWN);
+            return mulScaleRound(a, b, 0, getDefaultRoundingMode());
+        }
+    }
+
+    protected void checkCurrentScale(AbstractDecimal<?> firstNumber, AbstractDecimal<?> secondNumber) {
+        if (getScale() != firstNumber.getScale() || getScale() != secondNumber.getScale()) {
+            throw new IllegalArgumentException("Scales must be the same");
+        }
+    }
+
+    protected void checkScale(AbstractDecimal<?> firstNumber, AbstractDecimal<?> secondNumber) {
+        if (firstNumber.getScale() != secondNumber.getScale()) {
+            throw new IllegalArgumentException("Scales must be the same");
         }
     }
 }

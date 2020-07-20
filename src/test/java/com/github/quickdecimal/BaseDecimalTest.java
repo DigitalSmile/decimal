@@ -255,20 +255,20 @@ public class BaseDecimalTest {
     private void testDownScale(long value, int scale) {
         if (scale == 0) {
             assertThat(decimal.downScale_63_31(value, scale), is(value));
-            assertThat(decimal.a, is(0L));
+            assertThat(decimal.getRaw(), is(0L));
 
             value *= 2;
             assertThat(decimal.unsignedDownScale_64_31(value, scale), is(value));
-            assertThat(decimal.a, is(0L));
+            assertThat(decimal.getRaw(), is(0L));
         } else {
             long product = value * (long) Math.pow(10, scale) + 1;
             assertThat(decimal.downScale_63_31(product, scale), is(value));
-            assertThat(decimal.a, is(1L));
+            assertThat(decimal.getRaw(), is(1L));
 
             value *= 2;
             product = value * (long) Math.pow(10, scale) + 1;
             assertThat(decimal.unsignedDownScale_64_31(product, scale), is(value));
-            assertThat(decimal.a, is(1L));
+            assertThat(decimal.getRaw(), is(1L));
         }
     }
 
@@ -317,7 +317,7 @@ public class BaseDecimalTest {
                 .divideAndRemainder(BigInteger.TEN.pow(scale));
 
         long q = decimal.mulscale_63_31(a, b, scale);
-        long r = decimal.a;
+        long r = decimal.getRaw();
         if (q != NaN) {
             assertEquals("Quantity", dAndR[0], BigInteger.valueOf(q));
             assertEquals("Remainder", dAndR[1], BigInteger.valueOf(r));
@@ -354,7 +354,7 @@ public class BaseDecimalTest {
             BigInteger[] dAndR = BigInteger.valueOf(v).multiply(BigInteger.TEN.pow(s)).divideAndRemainder(BigInteger.valueOf(d));
 
             long q = decimal.scalediv_63_63(v, s, d);
-            long r = decimal.a;
+            long r = decimal.getRaw();
             if (q != NaN) {
                 assertEquals("Quantity", dAndR[0], BigInteger.valueOf(q));
                 assertEquals("Remainder", dAndR[1], BigInteger.valueOf(r));
@@ -370,7 +370,7 @@ public class BaseDecimalTest {
 
     private void testMulHi(long a, long b) {
         long hi = decimal.mulhi_63_32(a, b);
-        long lo = decimal.a;
+        long lo = decimal.getRaw();
         assertEquals(BigInteger.valueOf(hi).shiftLeft(BaseDecimal.WORD_BITS).add(BigInteger.valueOf(lo)),
                 BigInteger.valueOf(a).multiply(BigInteger.valueOf(b)));
     }
